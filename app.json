@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Suelto",
+    "slug": "suelto-app",
+    "orientation": "portrait",
+    "ios": {
+      "requireFullScreen": true
+    },
+    "androidStatusBar": {
+      "hidden": true
+    }
+  }
+}
