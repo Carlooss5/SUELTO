@@ -111,13 +111,13 @@ export default function App() {
   const [deposits, setDeposits] = useState([]);
 
   const EURO_IMAGES = {
-    5: require('./assets/euro_5.PNG'),
+    5: require('./assets/euro_5.png'),
     10: require('./assets/euro_10.png'),
-    20: require('./assets/euro_20.PNG'),
-    50: require('./assets/euro_50.PNG'),
-    100: require('./assets/euro_100.PNG'),
-    200: require('./assets/euro_200.PNG'),
-    500: require('./assets/euro_500.PNG'),
+    20: require('./assets/euro_20.png'),
+    50: require('./assets/euro_50.png'),
+    100: require('./assets/euro_100.png'),
+    200: require('./assets/euro_200.png'),
+    500: require('./assets/euro_500.png'),
   };
 
   const [activeDeposit, setActiveDeposit] = useState({

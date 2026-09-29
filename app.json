@@ -8,6 +8,10 @@
     },
     "androidStatusBar": {
       "hidden": true
-    }
+    },
+    "plugins": [
+      "expo-status-bar",
+      "expo-font"
+    ]
   }
 }
