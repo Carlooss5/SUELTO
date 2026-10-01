@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   LayoutAnimation,
-  UIManager,
   SafeAreaView,
   Animated,
   Image,
@@ -22,23 +21,16 @@ import {
   Linking,
   Dimensions
 } from 'react-native';
+import { useEventListener } from 'expo';
 import { BlurView } from 'expo-blur';
+import { useAudioPlayer } from 'expo-audio';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode, Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import * as NavigationBar from 'expo-navigation-bar';
+import { NavigationBar } from 'expo-navigation-bar';
 import * as LocalAuthentication from 'expo-local-authentication';
-
-
-// Habilitar LayoutAnimation en Android
-if (
-  Platform.OS === 'android' &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const CURRENCIES = [
   { id: 'USD', name: 'Dólar estadounidense', symbol: '$' },
@@ -91,10 +83,42 @@ const Odometer = ({ value }) => {
   return <Text>{displayValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Text>;
 };
 
+function SplashOverlay({ fadeAnim, onFinished }) {
+  const player = useVideoPlayer(
+    { assetId: require('./assets/animacion_billete.mp4') },
+    (videoPlayer) => {
+      videoPlayer.loop = false;
+      videoPlayer.play();
+    }
+  );
+
+  useEventListener(player, 'playToEnd', () => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      onFinished();
+    });
+  });
+
+  return (
+    <Animated.View style={[styles.splashScreen, { opacity: fadeAnim }]}>
+      <VideoView
+        player={player}
+        style={StyleSheet.absoluteFillObject}
+        contentFit="cover"
+        nativeControls={false}
+      />
+    </Animated.View>
+  );
+}
+
 export default function App() {
   const [appReady, setAppReady] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('Auth'); 
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const cashSound = useAudioPlayer(require('./assets/cash_sound.mp3'));
 
   const [isLogin, setIsLogin] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -514,8 +538,7 @@ const handlePinPress = (digit) => {
       try {
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
         if (Platform.OS === 'android') {
-          await NavigationBar.setVisibilityAsync("hidden");
-          await NavigationBar.setBehaviorAsync("overlay-swipe"); 
+          NavigationBar.setHidden(true);
         }
       } catch (error) {
         console.log("Error configurando el layout inicial:", error);
@@ -572,18 +595,6 @@ const handlePinPress = (digit) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setCurrentScreen('CurrencySelection');
     }, 1500);
-  };
-
-  const handlePlaybackStatusUpdate = (status) => {
-    if (status.didJustFinish) {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }).start(() => {
-        setAppReady(true);
-      });
-    }
   };
 
   const toggleCurrency = (currencyId) => {
@@ -762,8 +773,8 @@ const handlePinPress = (digit) => {
     if (isSoundEnabled) {
       (async () => {
         try {
-          const { sound } = await Audio.Sound.createAsync(require('./assets/cash_sound.mp3'));
-          await sound.playAsync();
+          cashSound.seekTo(0);
+          cashSound.play();
         } catch (error) {
           console.log("Sin sonido");
         }
@@ -4408,16 +4419,7 @@ const handlePinPress = (digit) => {
 
       {/* SPLASH SCREEN */}
       {!appReady && (
-        <Animated.View style={[styles.splashScreen, { opacity: fadeAnim }]}>
-          <Video
-            source={require('./assets/animacion_billete.mp4')} 
-            style={StyleSheet.absoluteFillObject}
-            resizeMode={ResizeMode.COVER}
-            shouldPlay={true} 
-            isLooping={false} 
-            onPlaybackStatusUpdate={handlePlaybackStatusUpdate} 
-          />
-        </Animated.View>
+        <SplashOverlay fadeAnim={fadeAnim} onFinished={() => setAppReady(true)} />
       )}
     </GestureHandlerRootView>
   );

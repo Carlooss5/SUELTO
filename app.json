@@ -10,8 +10,11 @@
       "hidden": true
     },
     "plugins": [
-      "expo-status-bar",
-      "expo-font"
+      ["expo-status-bar", { "hidden": true }],
+      "expo-font",
+      "expo-video",
+      "expo-audio",
+      ["expo-navigation-bar", { "hidden": true }]
     ]
   }
 }
