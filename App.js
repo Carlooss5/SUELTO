@@ -3767,7 +3767,7 @@ const handlePinPress = (digit) => {
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { height: '85%', paddingBottom: 40, backgroundColor: theme.bg, borderColor: theme.cardBorder }]}>
+          <View style={[styles.modalContent, { height: '94%', paddingBottom: 16, backgroundColor: theme.bg, borderColor: theme.cardBorder }]}>
             
             {/* Header del Modal */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingHorizontal: 4 }}>
@@ -3787,7 +3787,7 @@ const handlePinPress = (digit) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
               
               {/* --- PANTALLA 1: LA DECISIÓN --- */}
               {teamSetupStep === 'decision' && (
@@ -3864,19 +3864,19 @@ const handlePinPress = (digit) => {
 
               {/* --- PANTALLA 1.5: PIN MAESTRO (EL ESCUDO) --- */}
               {teamSetupStep === 'master_pin' && (
-                <View style={{ paddingBottom: 20, alignItems: 'center' }}>
-                  <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: theme.iconBg, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
+                <View style={{ paddingBottom: 48, alignItems: 'center' }}>
+                  <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: theme.iconBg, justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
                     <Ionicons name="key" size={32} color={theme.accent} />
                   </View>
-                  <Text style={{ color: theme.textMain, fontSize: 22, fontWeight: '800', marginBottom: 12 }}>Tu Llave Maestra</Text>
-                  <Text style={{ color: theme.textSub, fontSize: 14, textAlign: 'center', marginBottom: 30, paddingHorizontal: 20, lineHeight: 20 }}>
+                  <Text style={{ color: theme.textMain, fontSize: 22, fontWeight: '800', marginBottom: 8 }}>Tu Llave Maestra</Text>
+                  <Text style={{ color: theme.textSub, fontSize: 14, textAlign: 'center', marginBottom: 16, paddingHorizontal: 20, lineHeight: 20 }}>
                     {tempMasterPin.length === 0 && !masterPin
                       ? "Crea un PIN de 4 dígitos. Esta será tu llave exclusiva como Dueño para acceder a gráficas y ajustes."
                       : "Repite tu PIN de 4 dígitos para confirmar."}
                   </Text>
 
                   {/* Puntos visuales del PIN */}
-                  <View style={{ flexDirection: 'row', marginBottom: 40 }}>
+                  <View style={{ flexDirection: 'row', marginBottom: 20 }}>
                      {[0, 1, 2, 3].map((i) => (
                        <View 
                          key={i} 
@@ -3892,13 +3892,13 @@ const handlePinPress = (digit) => {
                   </View>
 
                   {/* Teclado Nativo Dopamínico */}
-                  <View style={{ width: 280, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <View style={{ width: 280, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 8 }}>
                     {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((key, idx) => (
                       <TouchableOpacity 
                         key={idx}
                         disabled={key === ''}
                         style={{ 
-                          width: 75, height: 75, margin: 8, borderRadius: 37.5, 
+                          width: 75, height: 75, margin: 6, borderRadius: 37.5, 
                           backgroundColor: key !== 'del' && key !== '' ? 'rgba(216,216,218,0.05)' : 'transparent', 
                           justifyContent: 'center', alignItems: 'center' 
                         }}
@@ -4471,7 +4471,7 @@ const styles = StyleSheet.create({
   continueButtonDisabled: { backgroundColor: 'rgba(216, 216, 218, 0.1)', shadowOpacity: 0, elevation: 0 },
   continueButtonText: { color: '#111A42', fontSize: 16, fontWeight: '800' },
 
-  dashboardContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 20 }, 
+  dashboardContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 38 }, 
   dashHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 },
   dashGreeting: { fontSize: 16, color: '#94A3B8', marginBottom: 4 },
   dashTitle: { fontSize: 26, fontWeight: '800', color: '#D8D8DA', letterSpacing: 0.5 },

@@ -10,11 +10,24 @@
       "hidden": true
     },
     "plugins": [
-      ["expo-status-bar", { "hidden": true }],
+      [
+        "expo-status-bar",
+        {
+          "hidden": true
+        }
+      ],
       "expo-font",
       "expo-video",
       "expo-audio",
-      ["expo-navigation-bar", { "hidden": true }]
-    ]
+      [
+        "expo-navigation-bar",
+        {
+          "hidden": true
+        }
+      ]
+    ],
+    "android": {
+      "package": "com.anonymous.sueltoapp"
+    }
   }
 }
