@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   LayoutAnimation,
-  SafeAreaView,
   Animated,
   Image,
   Alert,
@@ -21,6 +20,7 @@ import {
   Linking,
   Dimensions
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useEventListener } from 'expo';
 import { BlurView } from 'expo-blur';
 import { useAudioPlayer } from 'expo-audio';
@@ -83,6 +83,52 @@ const Odometer = ({ value }) => {
   return <Text>{displayValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Text>;
 };
 
+// Si el reproductor nativo falla al crearse (p. ej. "activity no longer available"),
+// no bloqueamos la app: saltamos el splash en lugar de mostrar el Render Error.
+class SplashErrorBoundary extends React.Component {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error) {
+    console.warn('Splash de vídeo omitido:', error?.message);
+    this.props.onError();
+  }
+  render() {
+    return this.state.hasError ? null : this.props.children;
+  }
+}
+
+// Espera a que la Activity de Android esté en primer plano y montada
+// antes de permitir crear el VideoPlayer nativo.
+function useActivityReady() {
+  const [isActive, setIsActive] = useState(AppState.currentState === 'active');
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      setIsActive(nextState === 'active');
+    });
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!isActive || isReady) return;
+    // Dejamos pasar un par de frames para asegurar que la Activity
+    // ya está adjunta cuando se cree el player.
+    let frame2;
+    const frame1 = requestAnimationFrame(() => {
+      frame2 = requestAnimationFrame(() => setIsReady(true));
+    });
+    return () => {
+      cancelAnimationFrame(frame1);
+      if (frame2) cancelAnimationFrame(frame2);
+    };
+  }, [isActive, isReady]);
+
+  return isReady;
+}
+
 function SplashOverlay({ fadeAnim, onFinished }) {
   const player = useVideoPlayer(
     { assetId: require('./assets/animacion_billete.mp4') },
@@ -118,6 +164,7 @@ export default function App() {
   const [appReady, setAppReady] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('Auth'); 
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const isActivityReady = useActivityReady();
   const cashSound = useAudioPlayer(require('./assets/cash_sound.mp3'));
 
   const [isLogin, setIsLogin] = useState(true);
@@ -862,6 +909,7 @@ const handlePinPress = (digit) => {
   // ------------------------------------
 
   return (
+    <SafeAreaProvider>
     <GestureHandlerRootView style={[styles.mainWrapper, currentScreen !== 'Auth' && { backgroundColor: theme.bg }]}>
       <SafeAreaView style={styles.safeArea}>
         
@@ -4419,9 +4467,17 @@ const handlePinPress = (digit) => {
 
       {/* SPLASH SCREEN */}
       {!appReady && (
-        <SplashOverlay fadeAnim={fadeAnim} onFinished={() => setAppReady(true)} />
+        isActivityReady ? (
+          <SplashErrorBoundary onError={() => setAppReady(true)}>
+            <SplashOverlay fadeAnim={fadeAnim} onFinished={() => setAppReady(true)} />
+          </SplashErrorBoundary>
+        ) : (
+          // Placeholder con el mismo fondo mientras la Activity no está disponible
+          <View style={styles.splashScreen} />
+        )
       )}
     </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 
