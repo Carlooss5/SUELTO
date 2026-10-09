@@ -213,6 +213,7 @@ export default function App() {
   const [enteredPin, setEnteredPin] = useState('');
   // --- ESTADO DE SUSCRIPCIÓN (Simulado) ---
   const [userPlan, setUserPlan] = useState('basic'); // Puede ser: 'basic', 'premium' o 'business'
+  const [downgradeModal, setDowngradeModal] = useState({ visible: false, title: '', message: '', cancelText: '', confirmText: '', targetPlan: 'basic' });
   const [customAlert, setCustomAlert] = useState({ visible: false, title: '', message: '', type: 'success' });
   const [activeBalanceIndex, setActiveBalanceIndex] = useState(0);
   const [activeChartIndex, setActiveChartIndex] = useState(0);
@@ -1009,7 +1010,7 @@ const handlePinPress = (digit) => {
           <View style={[styles.dashboardContainer, { backgroundColor: theme.bg }]}>
             <ScrollView 
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
+              contentContainerStyle={{ paddingBottom: 20, paddingTop: Platform.OS === "android" ? 12 : 4 }}
               style={{ flex: 1 }}
             >
               
@@ -1808,6 +1809,13 @@ const handlePinPress = (digit) => {
               <Text style={[styles.depositsTitle, { color: theme.textMain }]}>MIS DEPÓSITOS</Text>
             </View>
 
+            {/* Marca de agua decorativa (rellena el espacio libre con pocos ítems) */}
+            <View pointerEvents="none" style={styles.depositsWatermark}>
+              <Ionicons name="cash-outline" size={220} color={theme.accent} style={{ opacity: 0.05, transform: [{ rotate: '-12deg' }] }} />
+              <Ionicons name="logo-usd" size={90} color={theme.accent} style={{ position: 'absolute', top: 30, right: 30, opacity: 0.04 }} />
+              <Ionicons name="cash-outline" size={110} color={theme.accent} style={{ position: 'absolute', bottom: 150, left: 10, opacity: 0.04, transform: [{ rotate: '14deg' }] }} />
+            </View>
+
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.depositsListScroll}>
               {activeDeposits.length === 0 ? (
                 <View style={{alignItems: 'center', marginTop: 60}}>
@@ -2558,9 +2566,10 @@ const handlePinPress = (digit) => {
               <Text style={styles.settingsSectionTitle}>PERFIL DEL USUARIO</Text>
               <View style={styles.settingsBlock}>
                 <View style={styles.settingsRow}>
-                  <Text style={styles.settingsRowLabel}>Editar nombre de usuario</Text>
+                  <Text style={[styles.settingsRowLabel, { flexShrink: 1, marginRight: 12 }]} numberOfLines={1} ellipsizeMode="tail">Editar nombre de usuario</Text>
                   <TextInput 
-                    style={styles.settingsTextInput} 
+                    style={[styles.settingsTextInput, { flexShrink: 1 }]}
+                    numberOfLines={1}
                     value={finalUserName} 
                     onChangeText={setFinalUserName} 
                     placeholderTextColor="#64748B"
@@ -2637,8 +2646,13 @@ const handlePinPress = (digit) => {
                     }
                   }}
                 >
-                  <Text style={[styles.settingsRowLabel, userPlan !== 'basic' && {color: '#C48A76', fontWeight: 'bold'}]}>EXPORTACIÓN DE DATOS (PDF/XLSX)</Text>
-                  <Ionicons name="document-text" size={20} color={userPlan !== 'basic' ? "#C48A76" : "#D8D8DA"} />
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexShrink: 1, marginRight: 12 }}>
+                    <Text style={[styles.settingsRowLabel, { flexShrink: 1 }, userPlan !== 'basic' && {color: '#C48A76', fontWeight: 'bold'}]} numberOfLines={1} ellipsizeMode="tail">EXPORTACIÓN DE DATOS</Text>
+                    <View style={{ marginLeft: 8, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: 'rgba(196, 138, 118, 0.15)' }}>
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: '#C48A76' }}>PDF/XLSX</Text>
+                    </View>
+                  </View>
+                  <Ionicons name="document-text" size={20} color={userPlan !== 'basic' ? "#C48A76" : "#D8D8DA"} style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
                 <View style={styles.settingsDividerInternal} />
                 <TouchableOpacity 
@@ -3066,23 +3080,16 @@ const handlePinPress = (digit) => {
                 <TouchableOpacity 
                   style={[styles.planBtn, { backgroundColor: 'rgba(148, 163, 184, 0.2)' }]} 
                   onPress={() => {
-                    Alert.alert(
-                      "¿Bajar de plan?",
-                      userPlan === 'business' 
+                    setDowngradeModal({
+                      visible: true,
+                      title: '¿Bajar de plan?',
+                      message: userPlan === 'business' 
                         ? "Perderás el Cierre de Caja, el Escáner IA y la sincronización en la nube. Tus datos quedarán atrapados solo en este dispositivo."
                         : "Perderás las bóvedas ilimitadas, la sincronización en la nube y la automatización. Tus datos volverán a ser 100% locales.",
-                      [
-                        { text: "Me quedo", style: "cancel" },
-                        { 
-                          text: "Sí, bajar de plan", 
-                          style: "destructive",
-                          onPress: () => {
-                            setUserPlan('basic');
-                            if(isHapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                          }
-                        }
-                      ]
-                    );
+                      cancelText: 'Me quedo',
+                      confirmText: 'Sí, bajar de plan',
+                      targetPlan: 'basic'
+                    });
                   }}
                 >
                   <Text style={[styles.planBtnText, { color: '#94A3B8' }]}>VOLVER AL BÁSICO</Text>
@@ -3118,21 +3125,14 @@ const handlePinPress = (digit) => {
                   style={[styles.planBtn, { backgroundColor: '#C48A76' }]} 
                   onPress={() => {
                     if (userPlan === 'business') {
-                      Alert.alert(
-                        "¿Renunciar al modo Business?",
-                        "Perderás el Escáner IA, el Cierre de Caja profesional y la gestión fiscal de IVA. Tu cuenta volverá al modo personal.",
-                        [
-                          { text: "Mantener Business", style: "cancel" },
-                          { 
-                            text: "Bajar a Premium", 
-                            style: "destructive",
-                            onPress: () => {
-                              setUserPlan('premium');
-                              if (isHapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            }
-                          }
-                        ]
-                      );
+                      setDowngradeModal({
+                        visible: true,
+                        title: '¿Renunciar al modo Business?',
+                        message: "Perderás el Escáner IA, el Cierre de Caja profesional y la gestión fiscal de IVA. Tu cuenta volverá al modo personal.",
+                        cancelText: 'Mantener Business',
+                        confirmText: 'Bajar a Premium',
+                        targetPlan: 'premium'
+                      });
                     } else {
                       // Subiendo desde Básico
                       setUserPlan('premium');
@@ -4194,7 +4194,8 @@ const handlePinPress = (digit) => {
         if (animType === 'blind_close') animConfig = { color: '#059669', bg: 'rgba(5, 150, 105, 0.2)', emoji: '🔒', text: 'TURNO CERRADO' };
 
         return (
-          <View style={[StyleSheet.absoluteFillObject, { justifyContent: 'center', alignItems: 'center', zIndex: 9999, backgroundColor: 'rgba(17, 26, 66, 0.92)' }]}>
+          <Modal transparent animationType="none" visible statusBarTranslucent onRequestClose={() => {}}>
+          <View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(17, 26, 66, 0.85)' }]}>
             <Animated.View style={{ 
               alignItems: 'center',
               transform: [{ scale: popAnim }],
@@ -4224,8 +4225,40 @@ const handlePinPress = (digit) => {
               </Text>
             </Animated.View>
           </View>
+          </Modal>
         );
       })()}
+
+      {/* --- MODAL PERSONALIZADO: BAJAR DE PLAN --- */}
+      <Modal animationType="fade" transparent={true} visible={downgradeModal.visible} onRequestClose={() => setDowngradeModal(prev => ({ ...prev, visible: false }))}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(2, 6, 23, 0.8)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
+          <View style={{ width: '100%', maxWidth: 380, backgroundColor: '#0f172a', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(196, 138, 118, 0.35)', padding: 24, alignItems: 'center' }}>
+            <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(244, 67, 54, 0.15)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <Ionicons name="trending-down" size={30} color="#F44336" />
+            </View>
+            <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 12 }}>{downgradeModal.title}</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 14, lineHeight: 20, textAlign: 'center', marginBottom: 24 }}>{downgradeModal.message}</Text>
+            <TouchableOpacity
+              style={{ width: '100%', backgroundColor: '#C48A76', borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginBottom: 10 }}
+              onPress={() => setDowngradeModal(prev => ({ ...prev, visible: false }))}
+              activeOpacity={0.85}
+            >
+              <Text style={{ color: '#111A42', fontSize: 15, fontWeight: '800' }}>{downgradeModal.cancelText}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ width: '100%', borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(244, 67, 54, 0.6)', backgroundColor: 'rgba(244, 67, 54, 0.1)' }}
+              onPress={() => {
+                setUserPlan(downgradeModal.targetPlan);
+                setDowngradeModal(prev => ({ ...prev, visible: false }));
+                if (isHapticEnabled) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={{ color: '#F44336', fontSize: 15, fontWeight: '800' }}>{downgradeModal.confirmText}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       {/* --- OVERLAY NATIVO DE BLOQUEO / CREACIÓN DE PIN (RESTAURADO) --- */}
       {(lockMode === 'setup' || lockMode === 'panic-setup' || lockMode === 'unlock') && (
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#111A42', zIndex: 9998, justifyContent: 'center', alignItems: 'center' }]}>
@@ -4471,8 +4504,8 @@ const styles = StyleSheet.create({
   continueButtonDisabled: { backgroundColor: 'rgba(216, 216, 218, 0.1)', shadowOpacity: 0, elevation: 0 },
   continueButtonText: { color: '#111A42', fontSize: 16, fontWeight: '800' },
 
-  dashboardContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 20 }, 
-  dashHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 },
+  dashboardContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 0 }, 
+  dashHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   dashGreeting: { fontSize: 16, color: '#94A3B8', marginBottom: 4 },
   dashTitle: { fontSize: 26, fontWeight: '800', color: '#D8D8DA', letterSpacing: 0.5 },
   avatarBtn: { position: 'relative' },
@@ -4508,6 +4541,7 @@ const styles = StyleSheet.create({
   depositsHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, marginBottom: 28, marginTop: 16 },
   backArrowBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(216, 216, 218, 0.05)', borderWidth: 1, borderColor: 'rgba(216, 216, 218, 0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
   depositsTitle: { fontSize: 22, fontWeight: '800', color: '#D8D8DA', letterSpacing: 1.5 },
+  depositsWatermark: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   depositsListScroll: { paddingHorizontal: 24, paddingBottom: 120 },
   depositCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(216, 216, 218, 0.05)', borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(216, 216, 218, 0.1)' },
   depositCardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 16 },
